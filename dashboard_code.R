@@ -61,14 +61,14 @@ ui <- dashboardPage(
       
       menuItem("Settings", tabName = "settings", icon = icon("cogs")), 
       menuItem("Contact/Help", tabName = "contact", icon = icon("envelope"))
-    
-    
-    
-    
-    #div(
-    #  style = "position: absolute; bottom: 10px; width: 85%; text-align: center;",
-    #  actionButton("btn_contact", "Contact/Help", class = "btn btn-primary btn-block", style = "background-color: #2B2B65; color: white; border-color: #2B2B65;")
-    #
+      
+      
+      
+      
+      #div(
+      #  style = "position: absolute; bottom: 10px; width: 85%; text-align: center;",
+      #  actionButton("btn_contact", "Contact/Help", class = "btn btn-primary btn-block", style = "background-color: #2B2B65; color: white; border-color: #2B2B65;")
+      #
     )
   ),
   
@@ -218,7 +218,7 @@ ui <- dashboardPage(
         
   
       "))),
-   
+    
     
     tabItems(
       # Dashboard Page 1 (Environmental)
@@ -258,10 +258,10 @@ DiCE was created to bring key stakeholders together to address challenges associ
           box(title = "Total Cost Savings per Recovery Rate", width = 6, status = "primary", solidHeader = TRUE,
               plotlyOutput("bar_plot", height = 400))
         )
-          
-          
         
-       
+        
+        
+        
       ),
       
       # Dashboard Page 3 (Social)
@@ -281,7 +281,7 @@ DiCE was created to bring key stakeholders together to address challenges associ
         #Target variable visualisation 
         fluidRow(
           titlePanel("Climate Policy Targets - IPCC & EU Climate Law")
-          )
+        )
         
         
       ),
@@ -325,11 +325,11 @@ DiCE was created to bring key stakeholders together to address challenges associ
         box(title = "User Preferences", width = 6, status = "primary", solidHeader = TRUE,
             #selectInput("theme", "Select Theme:", choices = c("Light", "Dark")),
             sliderInput("fontsize", "Font Size:", min = 10, max = 24, value = 14)#,
-           # radioButtons("sidebar_pos", "Sidebar Position:", choices = c("Left", "Right"), selected = "Left")
+            # radioButtons("sidebar_pos", "Sidebar Position:", choices = c("Left", "Right"), selected = "Left")
         ),
         fluidRow(
           column(6)),
-       
+        
         br(),
         
         # Notifications
@@ -348,7 +348,7 @@ DiCE was created to bring key stakeholders together to address challenges associ
         fluidRow(
           column(2, actionButton("save_settings", "Save Settings", class = "btn btn-success", style="margin-left:10px;")),
           
-         
+          
           column(10, actionButton("reset_settings", "Reset to Default", class = "btn btn-danger"))
           
         )
@@ -360,224 +360,225 @@ DiCE was created to bring key stakeholders together to address challenges associ
         h2("Contact/Help"),
         p("This is the contact/help page. Please reach out to us for any queries.")
       )
-      ) #correct
-    )
+    ) #correct
+  )
+)
+
+
+
+
+
+
+# Define Server logic
+server <- function(input, output, session) {
+  
+  
+  
+  # Observe btn1 (Environmental) click: Switch to Dashboard 1 and make btn1 active
+  observeEvent(input$btn1, {
+    
+    updateTabItems(session, "tabs", "dashboard1")
+  })
+  
+  # Observe btn2 (Economic) click: Switch to Dashboard 2 and make btn2 active
+  observeEvent(input$btn2, {
+    
+    updateTabItems(session, "tabs", "dashboard2")
+  })
+  
+  # Observe btn3 (Social) click: Switch to Dashboard 3 and make btn3 active
+  observeEvent(input$btn3, {
+    
+    updateTabItems(session, "tabs", "dashboard3")
+  })
+  
+  observeEvent(input$btn4, {
+    
+    updateTabItems(session, "tabs", "dashboard4")
+  })
+  
+  # Observe btn3 (Social) click: Switch to Dashboard 3 and make btn3 active
+  observeEvent(input$btn_contact, {
+    
+    updateTabItems(session, "tabs", "contact")
+  })
+  
+  
+  
+  
+  # Line plot: Compare costs across lifecycles by recovery rate
+  output$line_plot <- renderPlotly({
+    ggplot(cost_data_long, aes(x = Lifecycle, y = Cost, group = `Recovery rate`, color = as.factor(`Recovery rate`))) +
+      geom_line(size = 1.2) +
+      geom_point(size = 3) +
+      labs(title = "Cost Comparison Across Lifecycles",
+           x = "Lifecycle",
+           y = "Cost ($)",
+           color = "Recovery Rate") +
+      scale_color_manual(values = c("92%" = "#2B2B65", "80%" = "#FF2953", "60%" = "#006400", "40%" = "#77F0CC")) +  # Custom colors
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })  
+  # Bar plot: Total cost savings per recovery rate
+  output$bar_plot <- renderPlotly({
+    ggplot(cost_data, aes(x = as.factor(`Recovery rate`), y = `Total costs`, fill = as.factor(`Recovery rate`))) +
+      geom_bar(stat = "identity", show.legend = FALSE, fill = "#2B2B65") +  # Set the fill color to dark blue
+      labs(title = "Total Cost Savings per Recovery Rate",
+           x = "Recovery Rate",
+           y = "Total Cost Savings ($)") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })
+  
+  
+  
+  
+  # Default values for settings
+  default_settings <- reactiveValues(
+    fontsize = 14
   )
   
+  # Observe Save Button Click
+  observeEvent(input$save_settings, {
+    showNotification("Settings Saved!", type = "message")
     
+    # Store user preferences
+    default_settings$fontsize <- input$fontsize
     
+    # Apply Font Size
+    font_size_css <- paste0("body { font-size: ", input$fontsize, "px !important; }")
+    shinyjs::runjs(paste0("var style = document.createElement('style'); style.innerHTML = '", font_size_css, "'; document.head.appendChild(style);"))
     
+    # Apply Font Size to Sidebar Sub-items
+    sidebar_font_size_css <- paste0(".sidebar-menu .treeview-menu > li > a { font-size: ", input$fontsize, "px !important; }")
+    shinyjs::runjs(paste0("var style = document.createElement('style'); style.innerHTML = '", sidebar_font_size_css, "'; document.head.appendChild(style);"))
+  })
+  
+  # Observe Reset Button Click
+  observeEvent(input$reset_settings, {
+    showNotification("Settings Reset!", type = "warning")
     
+    # Reset all inputs to default values
+    updateSliderInput(session, "fontsize", value = 14)
     
-    # Define Server logic
-    server <- function(input, output, session) {
-      
-      
-      
-      # Observe btn1 (Environmental) click: Switch to Dashboard 1 and make btn1 active
-      observeEvent(input$btn1, {
-        
-        updateTabItems(session, "tabs", "dashboard1")
-      })
-      
-      # Observe btn2 (Economic) click: Switch to Dashboard 2 and make btn2 active
-      observeEvent(input$btn2, {
-        
-        updateTabItems(session, "tabs", "dashboard2")
-      })
-      
-      # Observe btn3 (Social) click: Switch to Dashboard 3 and make btn3 active
-      observeEvent(input$btn3, {
-        
-        updateTabItems(session, "tabs", "dashboard3")
-      })
-      
-      observeEvent(input$btn4, {
-        
-        updateTabItems(session, "tabs", "dashboard4")
-      })
-      
-      # Observe btn3 (Social) click: Switch to Dashboard 3 and make btn3 active
-      observeEvent(input$btn_contact, {
-        
-        updateTabItems(session, "tabs", "contact")
-      })
-      
+    # Reset font size to default
+    shinyjs::runjs("var style = document.createElement('style'); style.innerHTML = 'body { font-size: 14px !important; }'; document.head.appendChild(style);")
     
-      
-      
-      # Line plot: Compare costs across lifecycles by recovery rate
-      output$line_plot <- renderPlotly({
-        ggplot(cost_data_long, aes(x = Lifecycle, y = Cost, group = `Recovery rate`, color = as.factor(`Recovery rate`))) +
-          geom_line(size = 1.2) +
-          geom_point(size = 3) +
-          labs(title = "Cost Comparison Across Lifecycles",
-               x = "Lifecycle",
-               y = "Cost ($)",
-               color = "Recovery Rate") +
-          theme_minimal() +
-          theme(axis.text.x = element_text(angle = 45, hjust = 1))
-      })
-      
-      # Bar plot: Total cost savings per recovery rate
-      output$bar_plot <- renderPlotly({
-        ggplot(cost_data, aes(x = as.factor(`Recovery rate`), y = `Total costs`, fill = as.factor(`Recovery rate`))) +
-          geom_bar(stat = "identity", show.legend = FALSE) +
-          labs(title = "Total Cost Savings per Recovery Rate",
-               x = "Recovery Rate",
-               y = "Total Cost Savings ($)") +
-          theme_minimal() +
-          theme(axis.text.x = element_text(angle = 45, hjust = 1))
-      })
-      
-      
-      
-      # Default values for settings
-      default_settings <- reactiveValues(
-        fontsize = 14
-      )
-      
-      # Observe Save Button Click
-      observeEvent(input$save_settings, {
-        showNotification("Settings Saved!", type = "message")
-        
-        # Store user preferences
-        default_settings$fontsize <- input$fontsize
-        
-        # Apply Font Size
-        font_size_css <- paste0("body { font-size: ", input$fontsize, "px !important; }")
-        shinyjs::runjs(paste0("var style = document.createElement('style'); style.innerHTML = '", font_size_css, "'; document.head.appendChild(style);"))
-        
-        # Apply Font Size to Sidebar Sub-items
-        sidebar_font_size_css <- paste0(".sidebar-menu .treeview-menu > li > a { font-size: ", input$fontsize, "px !important; }")
-        shinyjs::runjs(paste0("var style = document.createElement('style'); style.innerHTML = '", sidebar_font_size_css, "'; document.head.appendChild(style);"))
-      })
-      
-      # Observe Reset Button Click
-      observeEvent(input$reset_settings, {
-        showNotification("Settings Reset!", type = "warning")
-        
-        # Reset all inputs to default values
-        updateSliderInput(session, "fontsize", value = default_settings$fontsize)
-        
-        # Reset font size to default
-        shinyjs::runjs("var style = document.createElement('style'); style.innerHTML = 'body { font-size: 14px !important; }'; document.head.appendChild(style);")
-        
-        # Reset font size for sidebar sub-items
-        shinyjs::runjs("var style = document.createElement('style'); style.innerHTML = '.sidebar-menu .treeview-menu > li > a { font-size: 14px !important; }'; document.head.appendChild(style);")
-      })
-      
+    # Reset font size for sidebar sub-items
+    shinyjs::runjs("var style = document.createElement('style'); style.innerHTML = '.sidebar-menu .treeview-menu > li > a { font-size: 14px !important; }'; document.head.appendChild(style);")
+  })
+  
+  
+  #render Plot
+  output$plot <- renderPlot({
     
-      #render Plot
-      output$plot <- renderPlot({
-        
-        if (input$vizType == "Timeline") {
-          # Timeline Visualization
-          ggplot(emission_data, aes(x = Year, y = 1, label = Policy)) +
-            geom_point(size = 4, color = "blue") +
-            geom_text(vjust = -1, hjust = 0.5, size = 5) +
-            geom_segment(aes(xend = Year, yend = 1), color = "gray", size = 1) +
-            labs(title = "Climate Policy Timeline",
-                 x = "Year", y = "Milestones") +
-            theme_minimal() +
-            theme(axis.text.y = element_blank(),
-                  axis.ticks.y = element_blank(),
-                  panel.grid.major.y = element_blank())
-          
-        } else if (input$vizType == "Progress Bar") {
-          # Progress Bar Visualization
-          ggplot(emission_data, aes(x = factor(Year), y = Emissions, fill = Policy)) +
-            geom_col(width = 0.5) +
-            coord_flip() +
-            scale_y_continuous(labels = percent_format(scale = 1)) +
-            labs(title = "Emissions Reduction Progress",
-                 x = "Year", y = "Emissions Reduction (%)") +
-            theme_minimal()
-          
-        } else {
-          # Line Chart - GHG Emissions Reduction Over Time
-          ggplot(emission_data, aes(x = Year, y = Emissions, group = 1)) +
-            geom_line(color = "red", size = 1.5) +
-            geom_point(size = 4, color = "red") +
-            labs(title = "GHG Emissions Reduction Trend",
-                 x = "Year", y = "Emissions Reduction (%)") +
-            theme_minimal()
-        }
-      })
+    if (input$vizType == "Timeline") {
+      # Timeline Visualization
+      ggplot(emission_data, aes(x = Year, y = 1, label = Policy)) +
+        geom_point(size = 4, color = "blue") +
+        geom_text(vjust = -1, hjust = 0.5, size = 5) +
+        geom_segment(aes(xend = Year, yend = 1), color = "gray", size = 1) +
+        labs(title = "Climate Policy Timeline",
+             x = "Year", y = "Milestones") +
+        theme_minimal() +
+        theme(axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              panel.grid.major.y = element_blank())
       
+    } else if (input$vizType == "Progress Bar") {
+      # Progress Bar Visualization
+      ggplot(emission_data, aes(x = factor(Year), y = Emissions, fill = Policy)) +
+        geom_col(width = 0.5) +
+        coord_flip() +
+        scale_y_continuous(labels = percent_format(scale = 1)) +
+        labs(title = "Emissions Reduction Progress",
+             x = "Year", y = "Emissions Reduction (%)") +
+        theme_minimal()
       
-      library(leaflet)
-      library(ggplot2)
-      library(plotly)
-      library(dplyr)
-      
-      
-      
-      # Sample data: Amount of devices per country
-      device_data <- read_csv("merged_summary_with_lat_lon.csv", locale = locale(encoding = "UTF-8"))
-      # Reactive: Track selected country (from map OR dropdown)
-      selected_country <- reactiveVal(NULL)
-      
-      
-      output$device_map <- renderLeaflet({
-        leaflet(device_data) %>%
-          addTiles() %>%
-          addCircleMarkers(
-            lng = ~Longitude, lat = ~Latitude, radius = ~sqrt(Total_Devices) /10,
-            color =  "#FF2953", fillOpacity = 0.6,
-            popup = ~paste0("<b>", `Country Name`, "</b><br>Total Devices: ", Total_Devices),
-            layerId = ~`Country Name`
-          )
-      })
-      
-      # Update selection when map marker is clicked
-      observeEvent(input$device_map_marker_click, {
-        selected_country(input$device_map_marker_click$id)
-        updateSelectInput(session, "country_select", selected = input$device_map_marker_click$id)
-      })
-      
-      # Update selection when dropdown is used
-      observeEvent(input$country_select, {
-        if (input$country_select != "Select a country") {
-          selected_country(input$country_select)
-        }
-      })
-      
-      # Render Pie Chart
-      output$device_pie <- renderPlotly({
-        req(selected_country())  # Only update if a country is selected
-        
-        # Filter the data for the selected country
-        country_data <- device_data %>% filter(`Country Name` == selected_country())
-        
-        # Prepare data for the pie chart
-        pie_data <- data.frame(
-          Category = c("Multi-use Devices", "Reprocessed Devices", "Single-use Devices"),
-          Amount = c(country_data$`Multi use`, country_data$Reprocessed, country_data$Singleuse)
-        )
-        
-        # Render the pie chart
-        plot_ly(pie_data, labels = ~Category, values = ~Amount, type = "pie",
-                marker = list(colors = c("#2B2B65", "#FF2953", "#77F0CC"))) %>%
-          layout(title = paste("Device Breakdown for", country_data$`Country Name`))
-        
-        
-        bar_data <- data.frame(
-          Category = c("Multi-use Devices", "Reprocessed Devices", "Single-use Devices"),  # Custom names for categories
-          Amount = c(country_data$`Multi use`, country_data$Reprocessed, country_data$Singleuse)  # Match to your column names
-        )
-        
-        # Create the bar chart using plotly
-        plot_ly(bar_data, x = ~Category, y = ~Amount, type = "bar",
-                marker = list(color = c("#2B2B65", "#FF2953", "#77F0CC"))) %>%
-          layout(title = paste("Device Breakdown for", country_data$`Country Name`),
-                 xaxis = list(title = "Device Type"),
-                 yaxis = list(title = "Amount"))
-      })
- 
-      
-      
+    } else {
+      # Line Chart - GHG Emissions Reduction Over Time
+      ggplot(emission_data, aes(x = Year, y = Emissions, group = 1)) +
+        geom_line(color = "red", size = 1.5) +
+        geom_point(size = 4, color = "red") +
+        labs(title = "GHG Emissions Reduction Trend",
+             x = "Year", y = "Emissions Reduction (%)") +
+        theme_minimal()
     }
+  })
+  
+  
+  library(leaflet)
+  library(ggplot2)
+  library(plotly)
+  library(dplyr)
+  
+  
+  
+  # Sample data: Amount of devices per country
+  device_data <- read_csv("merged_summary_with_lat_lon.csv", locale = locale(encoding = "UTF-8"))
+  # Reactive: Track selected country (from map OR dropdown)
+  selected_country <- reactiveVal(NULL)
+  
+  
+  output$device_map <- renderLeaflet({
+    leaflet(device_data) %>%
+      addTiles() %>%
+      addCircleMarkers(
+        lng = ~Longitude, lat = ~Latitude, radius = ~sqrt(Total_Devices) /10,
+        color =  "#FF2953", fillOpacity = 0.6,
+        popup = ~paste0("<b>", `Country Name`, "</b><br>Total Devices: ", Total_Devices),
+        layerId = ~`Country Name`
+      )
+  })
+  
+  # Update selection when map marker is clicked
+  observeEvent(input$device_map_marker_click, {
+    selected_country(input$device_map_marker_click$id)
+    updateSelectInput(session, "country_select", selected = input$device_map_marker_click$id)
+  })
+  
+  # Update selection when dropdown is used
+  observeEvent(input$country_select, {
+    if (input$country_select != "Select a country") {
+      selected_country(input$country_select)
+    }
+  })
+  
+  # Render Pie Chart
+  output$device_pie <- renderPlotly({
+    req(selected_country())  # Only update if a country is selected
     
-    # Run the  app
-   shinyApp(ui = ui, server = server)
+    # Filter the data for the selected country
+    country_data <- device_data %>% filter(`Country Name` == selected_country())
+    
+    # Prepare data for the pie chart
+    pie_data <- data.frame(
+      Category = c("Multi-use Devices", "Reprocessed Devices", "Single-use Devices"),
+      Amount = c(country_data$`Multi use`, country_data$Reprocessed, country_data$Singleuse)
+    )
+    
+    # Render the pie chart
+    plot_ly(pie_data, labels = ~Category, values = ~Amount, type = "pie",
+            marker = list(colors = c("#2B2B65", "#FF2953", "#77F0CC"))) %>%
+      layout(title = paste("Device Breakdown for", country_data$`Country Name`))
+    
+    
+    bar_data <- data.frame(
+      Category = c("Multi-use Devices", "Reprocessed Devices", "Single-use Devices"),  # Custom names for categories
+      Amount = c(country_data$`Multi use`, country_data$Reprocessed, country_data$Singleuse)  # Match to your column names
+    )
+    
+    # Create the bar chart using plotly
+    plot_ly(bar_data, x = ~Category, y = ~Amount, type = "bar",
+            marker = list(color = c("#2B2B65", "#FF2953", "#77F0CC"))) %>%
+      layout(title = paste("Device Breakdown for", country_data$`Country Name`),
+             xaxis = list(title = "Device Type"),
+             yaxis = list(title = "Amount"))
+  })
+  
+  
+  
+}
+
+# Run the  app
+shinyApp(ui = ui, server = server)
