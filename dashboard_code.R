@@ -433,14 +433,14 @@ DiCE was created to bring key stakeholders together to address challenges associ
         #),
         
         # Action Buttons
-        #fluidRow(
-         # column(2, actionButton("save_settings", "Save Settings", class = "btn btn-success", style="margin-left:10px;")),
+        fluidRow(
+          column(2, actionButton("save_settings", "Save Settings", class = "btn btn-success", style="margin-left:10px;")),
           
           
-          #column(10, actionButton("reset_settings", "Reset to Default", class = "btn btn-danger"))
+          column(10, actionButton("reset_settings", "Reset to Default", class = "btn btn-danger"))
           
-        #)
-    #  ),
+        )
+     ),
       
       # Add the Contact Tab
       tabItem(
@@ -449,7 +449,7 @@ DiCE was created to bring key stakeholders together to address challenges associ
         p("This is the contact/help page. Please reach out to us for any queries.")
       )
     ) #correct
-    ))
+    )
 )
 
 
